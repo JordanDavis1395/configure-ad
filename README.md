@@ -2,8 +2,8 @@
 <img src="https://i.imgur.com/pU5A58S.png" alt="Microsoft Active Directory Logo"/>
 </p>
 
-<h1>On-premises Active Directory Deployed in the Cloud (Azure)</h1>
-This tutorial outlines the implementation of on-premises Active Directory within Azure Virtual Machines.<br />
+<h1>On-Premises Active Directory Deployed in the Cloud (Azure)</h1>
+This tutorial outlines the implementation of on-premises Active Directory within two Azure virtual machines.<br/>
 
 
 <h2>Environments and Technologies Used</h2>
@@ -18,104 +18,230 @@ This tutorial outlines the implementation of on-premises Active Directory within
 - Windows Server 2022
 - Windows 10 (21H2)
 
-<h2>High-Level Deployment and Configuration Steps</h2>
 
-- Install Active Directory on DC-01
-- Promote DC-01 to Domain Controller
-- Creating an Administrator in Directory
-- Join Client-01 to domain
-- Setup Remote Desktop for non-administrative users
 
 <h2>Deployment and Configuration Steps</h2>
 
-1.) Install Active Directory on DC-01.</h3>
+<h3>Step 1: Setup Resources in Azure</h3>
 
-- In the Server Manager dashboard, click "Add Roles and Features" and proceed with setup.
-<img width="736" alt="AD-setup" src="https://github.com/kirkgacias/ad-deployment-configuration/assets/158519921/bb534e6b-0072-420a-9f74-c03bbcc77016">
-
-<p>
-
-<p><strong> Select Active Directory Domain Services and complete the installation. </strong> </p>
-
-
-2.) Promote DC-01 to Domain Controller.</h3>
-
-- After the installation is complete, observe the flag in the top left corner the Server Manager.
-- Click on the flag and promote DC- to Domain Controller.
-
-<img width="242" alt="notif" src="https://github.com/kirkgacias/ad-deployment-configuration/assets/158519921/3cb91456-cc00-4e70-8ea2-2b54a5dc8137">
-
-
--  We will now add a forest and set root domain name to "mydomain.com".
-<p>
-<img width="565" alt="my domain" src="https://github.com/kirkgacias/ad-deployment-configuration/assets/158519921/e4d06e9a-a5a4-4e8b-b464-b90ac041cbc8"> </p>
-  
-- Complete the setup restart DC-01.
-- Log back in with "your"@mydomain.com.
+- Create two virtual machines
+	- If you need help creating your virtual machines, please see my tutorial [here](https://github.com/roslyndwilliams/virtual-machine)
+	- The first virtual machine will be the Domain Controller
+		- Name: DC-1
+		- Image: Windows Server 2022
+		- Take note of the virtual network (vNet) that is automatically created
+       
+<p align="center">
+<img src="https://i.imgur.com/mrpBWtM.png" height="70%" width="70%" alt="Azure Free Account"/>
 
 
 
-3.) Creating an Administrator in Directory </h3>
-
-- After DC-01 has reboot, click on Tools and select Active Directory Users and Computers.
-- Right on my.com, select New, and then click on Organizational Unit
-<img width="438" alt="Users" src="https://github.com/kirkgacias/ad-deployment-configuration/assets/158519921/23db8c79-84f4-4e6d-befe-77505518cb05">
-
-
-<p><strong> We will be creating OUs named _EMPLOYE and _ADMINS.</strong></p>
-
-<img width="450" alt="admins" src="https://github.com/kirkgacias/ad-deployment-configuration/assets/158519921/d64f8f3b-130b-4156-bc08-b16f7b21fc89">
-
-<p><strong>Right-click on Users and create a new user named Jane Doe with the username jane_admin.</strong></p>
-
-<img width="323" alt="jane doe" src="https://github.com/kirkgacias/ad-deployment-configuration/assets/158519921/5d8f782a-145a-404b-bc83-7a6721b3728d">
-
-<p><strong>Now we will make Jane Doe an administrator by righting her name and adding her to the "Domain Admins" security group.</strong></p>
-
-<img width="412" alt="add to group" src="https://github.com/kirkgacias/ad-deployment-configuration/assets/158519921/08175b12-7a59-4030-b5ef-6ef1983ac6e7">
+	- Set DC-1's Virtual Network Interface Card (vNIC) private IP address to be static
+		- Go to DC-1's network settings
+		- Select Networking
+		- Select the link next to Network Interface
+		- Select IP Configurations > ipconfig1
+		- Change the assignment from dynamic to static 
+			- This ensures DC-1's IP address will not change
+	   
+<p align="center">
+<img src="https://i.imgur.com/xcyLUOG.png" height="70%" width="70%" alt="Azure Free Account"/> <img src="https://i.imgur.com/ZaWdzTl.png" height="70%" width="70%" alt="Azure Free Services"/>  <img src="https://i.imgur.com/Vn0UhWm.png" height="70%" width="70%" alt="Azure Free Services"/>
+</p>
 
 
-<p><strong>Logout of DC-01 and log back in with Jane Doe’s credentials</strong></p>
+	- The second virtual machine will be the Client
+		- Name: Client-1
+		- Image: Windows 10 Pro
+		- Use the same resource group and vNet as DC-1
 
-<img width="337" alt="jane login" src="https://github.com/kirkgacias/ad-deployment-configuration/assets/158519921/751f9854-2aa5-4f94-b641-b355e77a2a32">
-
-
-4.) Join Client-01 to domain </h3>
-
-<p><strong> For Client-01 to join the domain, we first have to set it’s DNS server as DC-01’s private address.</strong></p>
-
-- In the Azure, navigate to Client-01 -> Networking -> Network Interface select DNS Servers.
-
-<img width="735" alt="dns servers" src="https://github.com/kirkgacias/ad-deployment-configuration/assets/158519921/13292c41-67f1-4212-95c4-084ac2ec0751">
+<p align="center">
+<img src="https://i.imgur.com/Vf7yeY1.png" height="70%" width="70%" alt="Azure Free Account"/> <img src="https://i.imgur.com/3DK41Cr.png" height="70%" width="70%" alt="Azure Free Services"/> 
 
 
-<p><strong>Select a custom DNS server, enter private IP address DC-01, and restart Client-01.</strong></p>
+<h3>Step 2: Ensure Connectivity Between the Client and Domain Controller</h3>
 
-<img width="356" alt="dns servers2" src="https://github.com/kirkgacias/ad-deployment-configuration/assets/158519921/d7ec7764-9fcd-4d46-8962-f536bcb1007d">
+- Login to Client-1 using Microsoft Remote Desktop
+- Search for Command Prompt and open it
+- Ping DC-1's private IP Address (for example, 10.1.0.4)
+	- Type "ping -t 10.1.0.4" into the command-line interface
+	- The ping request continually  times out due to the firewall settings
+		- To fix this, we need to enable ICMPv4 on DC-1's local Windows firewall
 
-<p><strong> Now log back in Client- using original admin credentials. Click and go to Settings > this PC (advanced) > Change and add "mydomain.com," then with the created admin credentials (jane_admin).) </strong></p>
+<p align="center">
+<img src="https://i.imgur.com/U6UOqj5.png" height="70%" width="70%" alt="Azure Free Account"/> 
+	
+- Login to DC-1 using Microsoft Remote Desktop
+	- Start > Windows Administrative Tools > Windows Defender Firewall with Advanced Security > Inbound Rules
+	- Sort the list by protocols
+	- Find "Core Networking Diagnostics" and "ICMPv4" and enable these two inbound rules
 
-<img width="297" alt="remote desktop first login" src="https://github.com/kirkgacias/ad-deployment-configuration/assets/158519921/97df566d-84c9-40d2-88b1-769f79af10a6">
+<p align="center">
+<img src="https://i.imgur.com/bw6eoLh.png" height="50%" width="50%" alt="Azure Free Account"/> <img src="https://i.imgur.com/BY1Ohgb.png" height="80%" width="80%" alt="Azure Free Services"/>
+</p>
 
-<br>
+- Log back into Client-1 and the command line will automatically begin pinging DC-1 successfully
+    
+<p align="center">
+<img src="https://i.imgur.com/890WIJB.png" height="70%" width="70%" alt="Azure Free Account"/> 
 
-<p> <strong>Once Client-01 has been added, the VM will restart.</strong></p>
+
+<h3>Step 3: Install Active Directory</h3>
+
+- Log back into DC-1
+	- Open Server Manager
+	- Select "Add Roles and Features" > Follow the prompts
+	- At Server Roles, check "Active Directory Domain Services."
+		- Ignore how the picture below already says "Installed"
+	- Select Add Features > select Next
+	- Complete the installation
+
+<p align="center">
+<img src="https://i.imgur.com/DQRVNnm.png" height="80%" width="80%" alt="Azure Free Account"/> <img src="https://i.imgur.com/RpzngRi.png" height="50%" width="50%" alt="Azure Free Services"/>
+</p>
+
+- At the top right of the Server Manager Dashboard, click on the flag
+- Select "Promote This Server to a Domain Controller"
+
+<p align="center">
+<img src="https://i.imgur.com/GOYiTFe.png" height="70%" width="70%" alt="Azure Free Account"/> 
+	
+ - Select "Add a New Forest"
+ 	- Root domain name: mydomain.com
+- Select Next
+- Create a password
+- Select Next and follow the prompts
+- Select Install to complete the installation
 
 
-5.) Setup Remote Desktop for non-administrative users </h3>
+<p align="center">
+<img src="https://i.imgur.com/IjfUZ0a.png" height="70%" width="70%" alt="Azure Free Account"/> 
+	
+- DC-1 will automatically restart
+- Log back into DC-1 as user: mydomain.com\labuser               
 
-- Log back into Client- using jane_admin and Settings > Remote Desktop > User Accounts clickSelect users that can access this PC.”
-- Add Domain Users.
+<p align="center">
+<img src="https://i.imgur.com/oNp39DK.png" height="70%" width="70%" alt="Azure Free Account"/> 
+	
 
-<br>
 
-<img width="343" alt="domain users" src="https://github.com/kirkgacias/ad-deployment-configuration/assets/158519921/04eaffe2-1fa3-4c4c-a327-8ea5b63e2c24">
+<h3>Step 4: Create an Admin and Normal User Account in Active Directory v1.15.8</h3>
+     
+- On DC-1, open Server Manager
+- Click Tools at the top-right of the screen
+- Select Active Directory Users and Computers
 
-<p><strong>This will allow normal users to login to Client-01</strong></p>
+<p align="center">
+<img src="https://i.imgur.com/udGHbGs.png" height="70%" width="70%" alt="Azure Free Account"/> 
+	
+- Right-click mydomain.com > New > Select Oranizational Unit (OU)
+- Create two OUs
+	- Name the first "_EMPLOYEES"
+	- Name the second "_ADMINS"
+	
+<p align="center">
+<img src="https://i.imgur.com/5wSZuA4.png" height="70%" width="70%" alt="Azure Free Account"/> 
+	
+	
+- Right-click mydomain.com and click Referesh to sort the new organizational units to the top
+- Go to the _ADMINS OU
+- Right-click the name of the OU > New > User
+	- First/Last name: Jane Doe
+	- User login name: jane_admin
+	- Select Next
+	- Create a password
+	- Uncheck all boxes
+	- Select Next and then select Finish
+<p align="center">
+<img src="https://i.imgur.com/nv6jc9p.png" height="70%" width="70%" alt="Azure Free Account"/> <img src="https://i.imgur.com/uLopQTZ.png" height="70%" width="70%" alt="Azure Free Account"/> 
+	
+- Go to the _ADMINS OU
+- Right-click Jane Doe > select Properties
+	- Click the tab named "Member of" > select Add
+	- Type in the names of your domain administrators
+	- Select "Check Names" > OK > Apply
+- Log out of DC-1 as "labuser" and log back in as “mydomain.com\jane_admin”
 
-<br>
 
-<h2> Concluding Remarks </h2>
 
-<p>
-We have successfully completed the Active Directory Deployment and Configuration phase. By configuring Active Directory on the Controller, we established our infrastructure by creating a forest, an administrator account, and Client-01 the domain.</p>
+<p align="center">
+<img src="https://i.imgur.com/EapMhBs.png" height="70%" width="70%" alt="Azure Free Account"/> <img src="https://i.imgur.com/vGb8Kx8.png" height="70%" width="70%" alt="Azure Free Services"/>
+</p>
+ 
+     
+
+<h3>Step 5: Join Client-1 to your domain (mydomain.com)
+</h3>
+
+- Go back to the Azure portal
+- Navigate to the Client-1 Virtual Machine
+- On the left-hand side of the screen select Networking
+- Select the link next to the NIC > select DNS Server > Custom
+- Type in DC-1's private IP address
+- Click Save
+- After it is done updating, select Restart and select Yes
+
+<p align="center">
+<img src="https://i.imgur.com/z6UesO7.png" height="70%" width="70%" alt="Azure Free Account"/> <img src="https://i.imgur.com/bt0yK17.png" height="70%" width="70%" alt="Azure Free Services"/>  <img src="https://i.imgur.com/sB5edH5.png" height="70%" width="70%" alt="Azure Free Services"/>
+</p>
+
+- Log back into Client-1 using Microsoft Remote Desktop as the original local admin (labuser)
+- Right-click the Start menu and select System
+- On right-hand side of the screen, select Rename This PC (Advanced) > Change
+- Under "Member of," select Domain
+- Type "mydomain.com" and select OK
+	- Username: mydomain.com\jane_admin
+	- Type in password and press OK
+- Restart the computer 			
+
+
+<p align="center">
+<img src="https://i.imgur.com/3HxJLpe.png" height="80%" width="80%" alt="Azure Free Account"/> <img src="https://i.imgur.com/J8M4zBU.png" height="50%" width="50%" alt="Azure Free Services"/>
+</p>
+
+<h3>Step 6: Setup Remote Desktop for non-administrative users on Client-1
+</h3>
+
+- Log back into Client-1
+- Use mydomain.com\jane_admin
+- Right-click the Start menu and select System
+- On the right-hand side of the screen, select Remote Desktop
+- Under User Accounts, click "Select Users That Can Remotely Access This PC > select Add
+- Type in the name of your domain users
+- Select "Check Names" > OK > OK
+
+ 
+ <p align="center">
+<img src="https://i.imgur.com/HgAXVMX.png" height="70%" width="70%" alt="Azure Free Account"/> <img src="https://i.imgur.com/0QDUk5l.png" height="60%" width="60%" alt="Azure Free Services"/>
+</p>
+
+<h3>Step 7: Create as many additional users as you would like and attempt to log into Client-1 with one of the users' profiles
+</h3>
+
+- Log back into DC-1 as jane_admin
+- Search for "Powershell_ise,"
+- Right-click on Powershell_ise and open it as an administrator
+- At the top-left of the screen select New Script and paste the contents of the following script into it
+	- You can find the script [here](https://github.com/joshmadakor1/AD_PS/blob/master/Generate-Names-Create-Users.ps1)
+
+<p align="center">
+<img src="https://i.imgur.com/MpvLIbB.png" height="70%" width="70%" alt="Azure Free Account"/> <img src="https://i.imgur.com/V4vIvre.png" height="70%" width="70%" alt="Azure Free Services"/>
+</p>
+
+- Click the green arrow button near the top-middle of the screen
+	- This will run the script
+- Once the users have been created, go back to Active Directory Users and Computers > mydomain.com > _EMPLOYEES
+		- You will see all the accounts that were created
+- You can now log into Client-1 with one of the accounts that were created
+	- Try logging into Client-1 as user "base.milu" using the password "Password1"
+
+<p align="center">
+<img src="https://i.imgur.com/3HN1Nf4.png" height="80%" width="80%" alt="Azure Free Account"/> <img src="https://i.imgur.com/CeE8LGh.png" height="50%" width="50%" alt="Azure Free Services"/>  <img src="https://i.imgur.com/7ZVBp8a.png" height="70%" width="70%" alt="Azure Free Services"/>
+</p>
+
+<p align="center">
+<img src="https://i.imgur.com/EzgHWRs.png" height="70%" width="70%" alt="Azure Free Account"/> <img src="https://i.imgur.com/hYFodxu.png" height="70%" width="70%" alt="Azure Free Services"/>
+</p>
+
+
+
+🎉Congratulations! You have implementated on-premises Active Directory and created users within an Azure virtual machine!🎉
