@@ -6,10 +6,6 @@
 This tutorial outlines the implementation of on-premises Active Directory within Azure Virtual Machines.<br />
 
 
-<h2>Video Demonstration</h2>
-
-- ### [YouTube: How to Deploy on-premises Active Directory within Azure Compute](https://www.youtube.com)
-
 <h2>Environments and Technologies Used</h2>
 
 - Microsoft Azure (Virtual Machines/Compute)
@@ -24,209 +20,102 @@ This tutorial outlines the implementation of on-premises Active Directory within
 
 <h2>High-Level Deployment and Configuration Steps</h2>
 
-- Step 1
-- Step 2
-- Step 3
-- Step 4
+- Install Active Directory on DC-01
+- Promote DC-01 to Domain Controller
+- Creating an Administrator in Directory
+- Join Client-01 to domain
+- Setup Remote Desktop for non-administrative users
 
 <h2>Deployment and Configuration Steps</h2>
 
-<p>
-<img src="https://i.imgur.com/DJmEXEB.png" height="80%" width="80%" alt="Disk Sanitization Steps"/>
-</p>
-<p>
-Setup Domain Controller in Azure
-—
+1.) Install Active Directory on DC-01.</h3>
 
-Create a Resource Group
-
-Create a Virtual Network and Subnet
-
-Create the Domain Controller VM (Windows Server 2022) named “DC-1”
-
-Username: labuser
-
-Password: Cyberlab123!
-
-After VM is created, set Domain Controller’s NIC Private IP address to be static
-
-Log into the VM and disable the Windows Firewall (for testing connectivity)
-
-</p>
-<br />
+- In the Server Manager dashboard, click "Add Roles and Features" and proceed with setup.
+<img width="736" alt="AD-setup" src="https://github.com/kirkgacias/ad-deployment-configuration/assets/158519921/bb534e6b-0072-420a-9f74-c03bbcc77016">
 
 <p>
-<img src="https://i.imgur.com/DJmEXEB.png" height="80%" width="80%" alt="Disk Sanitization Steps"/>
-</p>
+
+<p><strong> Select Active Directory Domain Services and complete the installation. </strong> </p>
+
+
+2.) Promote DC-01 to Domain Controller.</h3>
+
+- After the installation is complete, observe the flag in the top left corner the Server Manager.
+- Click on the flag and promote DC- to Domain Controller.
+
+<img width="242" alt="notif" src="https://github.com/kirkgacias/ad-deployment-configuration/assets/158519921/3cb91456-cc00-4e70-8ea2-2b54a5dc8137">
+
+
+-  We will now add a forest and set root domain name to "mydomain.com".
 <p>
-Setup Client-1 in Azure
-—
-
-Create the Client VM (Windows 10) named “Client-1”
-
-Username: labuser
-
-Password: Cyberlab123!
-
-Attach it to the same region and Virtual Network as DC-1
-
-After VM is created, set Client-1’s DNS settings to DC-1’s Private IP address
-
-From the Azure Portal, restart Client-1
-
-Login to Client-1
-
-Attempt to ping DC-1’s private IP address
-
-Ensure the ping succeeded
-
-From Client-1, open PowerShell and run ipconfig /all
-
-The output for the DNS settings should show DC-1’s private IP Address
-
-</p>
-<br />
+<img width="565" alt="my domain" src="https://github.com/kirkgacias/ad-deployment-configuration/assets/158519921/e4d06e9a-a5a4-4e8b-b464-b90ac041cbc8"> </p>
+  
+- Complete the setup restart DC-01.
+- Log back in with "your"@mydomain.com.
 
 
-<p>
-<img src="https://i.imgur.com/DJmEXEB.png" height="80%" width="80%" alt="Disk Sanitization Steps"/>
-</p>
-<p>
-Install Active Directory
-—
 
-Login to DC-1 and install Active Directory Domain Services
+3.) Creating an Administrator in Directory </h3>
 
-Promote as a DC: Setup a new forest as mydomain.com (can be anything, just remember what it is)
+- After DC-01 has reboot, click on Tools and select Active Directory Users and Computers.
+- Right on my.com, select New, and then click on Organizational Unit
+<img width="438" alt="Users" src="https://github.com/kirkgacias/ad-deployment-configuration/assets/158519921/23db8c79-84f4-4e6d-befe-77505518cb05">
 
-Restart and then log back into DC-1 as user: mydomain.com\labuser
 
-Create a Domain Admin user within the domain
-—
+<p><strong> We will be creating OUs named _EMPLOYE and _ADMINS.</strong></p>
 
-In Active Directory Users and Computers (ADUC), create an Organizational Unit (OU) called “_EMPLOYEES”
+<img width="450" alt="admins" src="https://github.com/kirkgacias/ad-deployment-configuration/assets/158519921/d64f8f3b-130b-4156-bc08-b16f7b21fc89">
 
-Create a new OU named “_ADMINS”
+<p><strong>Right-click on Users and create a new user named Jane Doe with the username jane_admin.</strong></p>
 
-Create a new employee named “Jane Doe” (same password) with the username of “jane_admin” / Cyberlab123!
+<img width="323" alt="jane doe" src="https://github.com/kirkgacias/ad-deployment-configuration/assets/158519921/5d8f782a-145a-404b-bc83-7a6721b3728d">
 
-Add jane_admin to the “Domain Admins” Security Group
+<p><strong>Now we will make Jane Doe an administrator by righting her name and adding her to the "Domain Admins" security group.</strong></p>
 
-Log out / close the connection to DC-1 and log back in as “mydomain.com\jane_admin”
+<img width="412" alt="add to group" src="https://github.com/kirkgacias/ad-deployment-configuration/assets/158519921/08175b12-7a59-4030-b5ef-6ef1983ac6e7">
 
-User jane_admin as your admin account from now on
 
-</p>
-<br />
+<p><strong>Logout of DC-01 and log back in with Jane Doe’s credentials</strong></p>
 
-<p>
-<img src="https://i.imgur.com/DJmEXEB.png" height="80%" width="80%" alt="Disk Sanitization Steps"/>
-</p>
-<p>
-Login to Client-1 as the original local admin (labuser) and join it to the domain (computer will restart)
+<img width="337" alt="jane login" src="https://github.com/kirkgacias/ad-deployment-configuration/assets/158519921/751f9854-2aa5-4f94-b641-b355e77a2a32">
 
-Login to the Domain Controller and verify Client-1 shows up in ADUC
 
-Create a new OU named “_CLIENTS” and drag Client-1 into there
+4.) Join Client-01 to domain </h3>
 
-</p>
-<br />
+<p><strong> For Client-01 to join the domain, we first have to set it’s DNS server as DC-01’s private address.</strong></p>
 
-<p>
-<img src="https://i.imgur.com/DJmEXEB.png" height="80%" width="80%" alt="Disk Sanitization Steps"/>
-</p>
-<p>
-Setup Remote Desktop for non-administrative users on Client-1
-—
+- In the Azure, navigate to Client-01 -> Networking -> Network Interface select DNS Servers.
 
-Log into Client-1 as mydomain.com\jane_admin
+<img width="735" alt="dns servers" src="https://github.com/kirkgacias/ad-deployment-configuration/assets/158519921/13292c41-67f1-4212-95c4-084ac2ec0751">
 
-Open system properties
 
-Click “Remote Desktop”
+<p><strong>Select a custom DNS server, enter private IP address DC-01, and restart Client-01.</strong></p>
 
-Allow “domain users” access to remote desktop
+<img width="356" alt="dns servers2" src="https://github.com/kirkgacias/ad-deployment-configuration/assets/158519921/d7ec7764-9fcd-4d46-8962-f536bcb1007d">
 
-You can now log into Client-1 as a normal, non-administrative user now
+<p><strong> Now log back in Client- using original admin credentials. Click and go to Settings > this PC (advanced) > Change and add "mydomain.com," then with the created admin credentials (jane_admin).) </strong></p>
 
-Normally you’d want to do this with Group Policy that allows you to change MANY systems at once (maybe a future lab)
+<img width="297" alt="remote desktop first login" src="https://github.com/kirkgacias/ad-deployment-configuration/assets/158519921/97df566d-84c9-40d2-88b1-769f79af10a6">
 
-</p>
-<br />
+<br>
+
+<p> <strong>Once Client-01 has been added, the VM will restart.</strong></p>
+
+
+5.) Setup Remote Desktop for non-administrative users </h3>
+
+- Log back into Client- using jane_admin and Settings > Remote Desktop > User Accounts clickSelect users that can access this PC.”
+- Add Domain Users.
+
+<br>
+
+<img width="343" alt="domain users" src="https://github.com/kirkgacias/ad-deployment-configuration/assets/158519921/04eaffe2-1fa3-4c4c-a327-8ea5b63e2c24">
+
+<p><strong>This will allow normal users to login to Client-01</strong></p>
+
+<br>
+
+<h2> Concluding Remarks </h2>
 
 <p>
-<img src="https://i.imgur.com/DJmEXEB.png" height="80%" width="80%" alt="Disk Sanitization Steps"/>
-</p>
-<p>
-Create a bunch of additional users and attempt to log into client-1 with one of the users
-—
-
-Login to DC-1 as jane_admin
-
-Open PowerShell_ise as an administrator
-
-Create a new File and paste the contents of the script into it
-
-Run the script and observe the accounts being created
-
-When finished, open ADUC and observe the accounts in the appropriate OU　(_EMPLOYEES)
-
-attempt to log into Client-1 with one of the accounts (take note of the password in the script)
-
-</p>
-<br />
-
-<p>
-<img src="https://i.imgur.com/DJmEXEB.png" height="80%" width="80%" alt="Disk Sanitization Steps"/>
-</p>
-<p>
-Dealing with Account Lockouts
-
-Get logged into dc-1
-
-Pick a random user account you created previously
-
-Attempt to log in with it 10 times with a bad password
-
-
-Attempt to log in with it 6 times with a bad password
-
-Observe that the account has been locked out within Active Directory
-
-Unlock the account
-
-Reset the password
-
-Attempt to login with it
-
-</p>
-<br />
-
-<p>
-<img src="https://i.imgur.com/DJmEXEB.png" height="80%" width="80%" alt="Disk Sanitization Steps"/>
-</p>
-<p>
-Enabling and Disabling Accounts:
-
-Disable the same account in Active Directory
-
-Attempt to login with it, observe the error message
-
-Re-enable the account and attempt to login with it.
-
-</p>
-<br />
-
-<p>
-<img src="https://i.imgur.com/DJmEXEB.png" height="80%" width="80%" alt="Disk Sanitization Steps"/>
-</p>
-<p>
-Observing Logs:
-
-Observe the logs in the Domain Controller
-
-Observe the logs on the client Machine
-
-</p>
-<br />
-
+We have successfully completed the Active Directory Deployment and Configuration phase. By configuring Active Directory on the Controller, we established our infrastructure by creating a forest, an administrator account, and Client-01 the domain.</p>
